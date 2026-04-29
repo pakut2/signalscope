@@ -1,6 +1,6 @@
-## SignalScope
+# SignalScope
 
-### Build & Run
+## Build & Run
 
 ```shell
 cd build

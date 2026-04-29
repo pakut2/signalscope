@@ -1,0 +1,17 @@
+Checks: >
+  -*,
+  clang-analyzer-*,
+  bugprone-*,
+  readability-duplicate-include,
+  readability-implicit-bool-conversion,
+  readability-inconsistent-declaration-parameter-name,
+  readability-misleading-indentation,
+  readability-named-parameter,
+  readability-non-const-parameter,
+  readability-redundant-control-flow,
+  readability-redundant-declaration,
+  readability-simplify-boolean-expr,
+
+WarningsAsErrors: ''
+HeaderFilterRegex: '^(\\.|utils)/'
+FormatStyle: none
