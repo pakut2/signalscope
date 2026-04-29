@@ -5,7 +5,7 @@
 
 #define ENABLE_CURSES 1
 
-const size_t max_height = 50;
+const float height = 50.0f;
 const size_t spacing = 2;
 const float smoothness = 8.0f;
 
@@ -20,10 +20,11 @@ uint64_t start, next_tick;
 void on_audio_data(spectrum spectrum) {
     renderer_clear();
 
-    for (size_t i = 0; i < spectrum.size; i++) {
+    for (size_t i = 0; i < spectrum.frequency_bin_count; i++) {
+        // TODO rapid attack / smooth release
         interpolated_frequencies[i] += (spectrum.normalized_frequencies[i] - interpolated_frequencies[i]) * tick_sec * smoothness;
 
-        render_bar(interpolated_frequencies[i] * max_height, spacing * i);
+        render_bar(interpolated_frequencies[i] * height, i * spacing);
     }
 
     renderer_refresh();

@@ -18,7 +18,7 @@ void on_audio_capture(ma_device *device, void *output, const void *input, ma_uin
 
     fft(smoothed_samples, frequencies, SAMPLE_COUNT, 1);
 
-    spectrum normalized_frequencies = normalize_frequencies(frequencies, SAMPLE_COUNT / 2);
+    spectrum normalized_frequencies = normalize_frequencies(frequencies, SAMPLE_COUNT / 2, device->sampleRate);
 
     on_frame_analyzed callback = device->pUserData;
     callback(normalized_frequencies);
