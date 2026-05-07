@@ -1,47 +1,50 @@
 #include "spectrum_analyzer.h"
+#include "./utils/ring_buffer.h"
 #include <assert.h>
 #include <complex.h>
 #include <float.h>
 #include <math.h>
-#include <stddef.h>
 #include <stdlib.h>
 
 #define MIN_FREQUENCY_BIN 1.0f
 #define MIN_FREQUENCY_LOUDNESS -FLT_MAX
 #define SEMITONE_FREQUENCY_COEFFICIENT 1.06f
 
+ring_bufferf samples;
+float complex frequencies[SAMPLE_COUNT];
+
 float apply_hanning_window(float period) {
     return 0.5f - 0.5f * cosf(2.0f * (float)M_PI * period);
 }
 
-void smoothen_samples(float samples[], float smoothed_samples[], size_t number_of_samples) {
-    for (size_t i = 0; i < number_of_samples; i++) {
-        float period = (float)i / (float)(number_of_samples - 1);
+void smoothen_samples(float samples[], float smoothed_samples[], size_t samples_count) {
+    for (size_t i = 0; i < samples_count; i++) {
+        float period = (float)i / (float)(samples_count - 1);
 
         smoothed_samples[i] = samples[i] * apply_hanning_window(period);
     }
 }
 
-void fft(float samples[], float complex frequencies[], size_t number_of_samples, size_t step) {
-    assert(number_of_samples > 0 && (number_of_samples & (number_of_samples - 1)) == 0); // Array size must be a power of 2
+void fft(float samples[], float complex frequencies[], size_t samples_count, size_t step) {
+    assert(samples_count > 0 && (samples_count & (samples_count - 1)) == 0); // Array size must be a power of 2
 
-    if (number_of_samples == 1) {
+    if (samples_count == 1) {
         frequencies[0] = samples[0];
 
         return;
     }
 
-    fft(samples, frequencies, number_of_samples / 2, step * 2);
-    fft(samples + step, frequencies + number_of_samples / 2, number_of_samples / 2, step * 2);
+    fft(samples, frequencies, samples_count / 2, step * 2);
+    fft(samples + step, frequencies + samples_count / 2, samples_count / 2, step * 2);
 
-    for (size_t i = 0; i < number_of_samples / 2; i++) {
-        float period = (float)i / (float)number_of_samples;
+    for (size_t i = 0; i < samples_count / 2; i++) {
+        float period = (float)i / (float)samples_count;
 
-        float complex frequency = cexp(-2 * I * M_PI * period) * frequencies[i + number_of_samples / 2];
+        float complex frequency = cexp(-2 * I * M_PI * period) * frequencies[i + samples_count / 2];
         float complex existing_frequency = frequencies[i];
 
         frequencies[i] = existing_frequency + frequency;
-        frequencies[i + number_of_samples / 2] = existing_frequency - frequency;
+        frequencies[i + samples_count / 2] = existing_frequency - frequency;
     }
 }
 
@@ -82,8 +85,9 @@ float apply_d_weight(float frequency) {
 
 float find_frequency_loudness(float complex frequency, size_t frequency_count, size_t bin_index, size_t sample_rate) {
     float loudness = 20.0f * log10f(cabsf(frequency));
-    float bin_magnitude = (float)bin_index * (float)sample_rate / (float)(frequency_count * 2); // Assume mirroed frequencies are not included
+    float bin_magnitude = (float)bin_index * (float)sample_rate / (float)(frequency_count * 2); // Assume mirrored frequencies are not included
 
+    // TODO experiment with K-weighting
     return loudness + apply_a_weight(bin_magnitude);
 }
 
@@ -115,6 +119,7 @@ spectrum normalize_frequencies(float complex frequencies[], size_t frequency_cou
     }
 
     float *normalized_frequencies = malloc(frequency_bin_count * sizeof normalized_frequencies[0]);
+    assert(normalized_frequencies != NULL);
 
     size_t current_frequency_bin = 0;
     for (float f = MIN_FREQUENCY_BIN; (size_t)f < frequency_count; f = find_next_frequency_bin(f)) {
@@ -147,6 +152,22 @@ spectrum normalize_frequencies(float complex frequencies[], size_t frequency_cou
     }
 
     return (spectrum){normalized_frequencies, frequency_bin_count};
+}
+
+void spectrum_analyzer_init(void) {
+    samples = ring_bufferf_create(SAMPLE_COUNT);
+}
+
+spectrum spectrum_create(size_t sample_rate) {
+    float samples_frame[SAMPLE_COUNT];
+    ring_bufferf_read(&samples, samples_frame);
+
+    float smoothed_samples[SAMPLE_COUNT];
+    smoothen_samples(samples_frame, smoothed_samples, SAMPLE_COUNT);
+
+    fft(smoothed_samples, frequencies, SAMPLE_COUNT, 1);
+
+    return normalize_frequencies(frequencies, SAMPLE_COUNT / 2, sample_rate);
 }
 
 void spectrum_destroy(spectrum *spectrum) {

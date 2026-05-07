@@ -6,6 +6,6 @@
 cd build
 cmake ..
 make
-./signalscope
+./signalscope.app/Contents/MacOS/signalscope
 ```
 

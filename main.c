@@ -2,6 +2,7 @@
 #include "audio_decoder.h"
 #include "renderer.h"
 #include "spectrum_analyzer.h"
+#include <ncurses.h>
 
 #define ENABLE_CURSES 1
 
@@ -11,29 +12,35 @@ const float smoothness = 8.0f;
 
 float interpolated_frequencies[SAMPLE_COUNT];
 
-// 60 FPS
-const float tick_sec = 1.0f / 60.0f;
-const uint64_t tick_ns = SEC_TO_NS(1) / 60;
+void render_frame(size_t sample_rate, float frame_elapsed_sec) {
+    spectrum spectrum = spectrum_create(sample_rate);
 
-uint64_t start, next_tick;
-
-void on_audio_data(spectrum spectrum) {
     renderer_clear();
 
     for (size_t i = 0; i < spectrum.frequency_bin_count; i++) {
         // TODO rapid attack / smooth release
-        interpolated_frequencies[i] += (spectrum.normalized_frequencies[i] - interpolated_frequencies[i]) * tick_sec * smoothness;
+        interpolated_frequencies[i] += (spectrum.normalized_frequencies[i] - interpolated_frequencies[i]) * frame_elapsed_sec * smoothness;
 
         render_bar(interpolated_frequencies[i] * height, i * spacing);
     }
 
     renderer_refresh();
 
-    next_tick += tick_ns;
-    uint64_t now = nanosecond_timestamp();
+    spectrum_destroy(&spectrum);
+}
 
-    if (now < next_tick) {
-        usleep(NS_TO_US(next_tick - now));
+void render_frames(size_t sample_rate) {
+    timeout(16);
+
+    uint64_t frame_start = nanosecond_timestamp();
+
+    while (getch() == ERR) {
+        uint64_t frame_end = nanosecond_timestamp();
+        float frame_elapsed_sec = NS_TO_SECF(frame_end - frame_start);
+
+        frame_start = frame_end;
+
+        render_frame(sample_rate, frame_elapsed_sec);
     }
 }
 
@@ -42,10 +49,11 @@ int main(void) {
     renderer_init();
 #endif
 
-    start = nanosecond_timestamp();
-    next_tick = start;
+    spectrum_analyzer_init();
 
-    decode_speaker_audio(on_audio_data);
+    // TODO dynamic device choice
+    decode_speaker_audio(render_frames);
+    // decode_microphone_audio(render_frames);
 
 #if ENABLE_CURSES
     renderer_shutdown();
