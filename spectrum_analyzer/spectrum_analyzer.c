@@ -1,5 +1,5 @@
 #include "spectrum_analyzer.h"
-#include "./utils/ring_buffer.h"
+#include "ring_buffer.h"
 #include <assert.h>
 #include <complex.h>
 #include <float.h>
@@ -156,6 +156,10 @@ spectrum normalize_frequencies(float complex frequencies[], size_t frequency_cou
 
 void spectrum_analyzer_init(void) {
     samples = ring_bufferf_create(SAMPLE_COUNT);
+}
+
+void spectrum_samples_append(float *audio_samples, size_t audio_samples_count) {
+    ring_bufferf_append(&samples, audio_samples, audio_samples_count);
 }
 
 spectrum spectrum_create(size_t sample_rate) {

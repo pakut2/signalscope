@@ -1,12 +1,9 @@
 cmake_minimum_required(VERSION 3.23)
 
 set(CMAKE_C_COMPILER clang)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(signalscope C OBJC)
-
-if(NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_NAME}")
-endif()
 
 file(GLOB DIR_SRC_FILES CONFIGURE_DEPENDS
     "utils/*.c"
@@ -14,44 +11,32 @@ file(GLOB DIR_SRC_FILES CONFIGURE_DEPENDS
 
 add_executable(signalscope MACOSX_BUNDLE
     main.c
-    spectrum_analyzer.c
-    audio_decoder.c
     renderer.c
-    lib/miniaudio.c
-    coreaudio/coreaudio_tap.c
-    coreaudio/coreaudio_tap.m
     ${DIR_SRC_FILES}
 )
+
+add_subdirectory(audio_decoder)
+add_subdirectory(spectrum_analyzer)
 
 target_include_directories(signalscope PRIVATE
     .
     utils
-    lib
-    coreaudio
 )
 
 target_compile_options(signalscope PRIVATE
-    -Wall
-    -Wextra
+    $<$<CONFIG:Debug>:-Wall -Wextra -fsanitize=address>
 )
 
-set_source_files_properties(coreaudio/coreaudio_tap.m PROPERTIES
-    LANGUAGE OBJC
-)
-
-# TODO only for debug
 target_link_options(signalscope PRIVATE
-    -fsanitize=address
+    $<$<CONFIG:Debug>:-fsanitize=address>
 )
-
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Curses REQUIRED)
 
 target_link_libraries(signalscope PRIVATE
+    audio_decoder
+    spectrum_analyzer
     ${CURSES_LIBRARIES}
-    "-framework Foundation"
-    "-framework CoreAudio"
 )
 
 set_target_properties(signalscope PROPERTIES
@@ -62,3 +47,4 @@ set_target_properties(signalscope PROPERTIES
     MACOSX_BUNDLE_BUNDLE_VERSION "1"
     MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
 )
+

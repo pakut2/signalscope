@@ -1,7 +1,7 @@
-#include "./utils/date_time.h"
 #include "audio_decoder.h"
 #include "renderer.h"
-#include "spectrum_analyzer.h"
+#include "spectrum_analyzer/spectrum_analyzer.h"
+#include "utils/date_time.h"
 #include <ncurses.h>
 
 #define ENABLE_CURSES 1
@@ -11,6 +11,10 @@ const size_t spacing = 2;
 const float smoothness = 8.0f;
 
 float interpolated_frequencies[SAMPLE_COUNT];
+
+void on_audio_capture(float *samples, size_t samples_count) {
+    spectrum_samples_append(samples, samples_count);
+}
 
 void render_frame(size_t sample_rate, float frame_elapsed_sec) {
     spectrum spectrum = spectrum_create(sample_rate);
@@ -52,8 +56,8 @@ int main(void) {
     spectrum_analyzer_init();
 
     // TODO dynamic device choice
-    decode_speaker_audio(render_frames);
-    // decode_microphone_audio(render_frames);
+    decode_speaker_audio(render_frames, on_audio_capture);
+    // decode_microphone_audio(render_frames, on_audio_capture);
 
 #if ENABLE_CURSES
     renderer_shutdown();

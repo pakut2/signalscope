@@ -118,13 +118,14 @@ OSStatus ca_tap_callback(
     const UInt32 sample_count = samples->mDataByteSize / sizeof(float);
 
     ca_audio_tap *tap = in_client_data;
-    tap->callback(samples->mData, sample_count);
+    tap->callback(samples->mData, sample_count, tap->user_data);
 
     return noErr;
 }
 
-void ca_loopback_device_start(ca_audio_tap *tap, on_samples_processed callback) {
+void ca_loopback_device_start(ca_audio_tap *tap, ca_on_samples_processed callback, void *user_data) {
     tap->callback = callback;
+    tap->user_data = user_data;
     tap->tap_description = ca_tap_description_create();
 
     OSStatus status = ca_process_tap_create(tap->tap_description, &tap->tap_id);
