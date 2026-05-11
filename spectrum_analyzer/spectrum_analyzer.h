@@ -12,7 +12,7 @@ typedef struct {
 } spectrum;
 
 PUBLIC void spectrum_analyzer_init(void);
-PUBLIC void spectrum_samples_append(float *audio_samples, size_t audio_samples_count);
+PUBLIC void spectrum_samples_append(float *audio_samples, size_t audio_sample_count);
 PUBLIC spectrum spectrum_create(size_t sample_rate);
 PUBLIC void spectrum_destroy(spectrum *spectrum);
 

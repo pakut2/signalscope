@@ -1,3 +1,5 @@
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
 add_library(spectrum_analyzer SHARED
   spectrum_analyzer.c
   ring_buffer.c

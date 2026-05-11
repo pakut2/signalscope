@@ -158,5 +158,4 @@ void ca_loopback_device_stop(ca_audio_tap *tap) {
     ca_tap_description_destroy(tap->tap_description);
 
     free(tap);
-    tap = NULL;
 }

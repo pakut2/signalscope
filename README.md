@@ -1,15 +1,17 @@
 # SignalScope
 
-## Initialize
+## Terminal
+
+### Initialize
 
 ```shell
 cd build
 
-cmake .. -DCMAKE_BUILD_TYPE=Debug # Debug build
+cmake ../terminal -DCMAKE_BUILD_TYPE=Debug # Debug build
 cmake .. # Release build
 ```
 
-## Build
+### Build
 
 ```shell
 cd build
@@ -17,11 +19,45 @@ cd build
 make
 ```
 
-## Run
+### Run
 
 ```shell
 cd build
 
 ./signalscope.app/Contents/MacOS/signalscope
 ```
+
+## Desktop
+
+### Build Libraries
+
+```shell
+cd build
+
+cmake ..
+make
+```
+
+### Initialize
+
+```shell
+cd desktop
+
+python -m venv .venv
+source .venv/bin/activate
+pip install setuptools py2app
+```
+
+### Build
+
+```shell
+cd desktop
+
+source .venv/bin/activate
+python setup.py py2app
+```
+
+### Run
+
+Open application in `dist` directory.
 

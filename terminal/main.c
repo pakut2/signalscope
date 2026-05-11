@@ -1,6 +1,6 @@
 #include "audio_decoder.h"
 #include "renderer.h"
-#include "spectrum_analyzer/spectrum_analyzer.h"
+#include "spectrum_analyzer.h"
 #include "utils/date_time.h"
 #include <ncurses.h>
 
@@ -33,7 +33,15 @@ void render_frame(size_t sample_rate, float frame_elapsed_sec) {
     spectrum_destroy(&spectrum);
 }
 
-void render_frames(size_t sample_rate) {
+int main(void) {
+#if ENABLE_CURSES
+    renderer_init();
+#endif
+
+    spectrum_analyzer_init();
+
+    // TODO dynamic device choice
+    audio_decoder audio_decoder = audio_decoder_start(SPEAKER, on_audio_capture);
     timeout(16);
 
     uint64_t frame_start = nanosecond_timestamp();
@@ -44,20 +52,10 @@ void render_frames(size_t sample_rate) {
 
         frame_start = frame_end;
 
-        render_frame(sample_rate, frame_elapsed_sec);
+        render_frame(audio_decoder.sample_rate, frame_elapsed_sec);
     }
-}
 
-int main(void) {
-#if ENABLE_CURSES
-    renderer_init();
-#endif
-
-    spectrum_analyzer_init();
-
-    // TODO dynamic device choice
-    decode_speaker_audio(render_frames, on_audio_capture);
-    // decode_microphone_audio(render_frames, on_audio_capture);
+    audio_decoder_stop(SPEAKER, audio_decoder.device);
 
 #if ENABLE_CURSES
     renderer_shutdown();

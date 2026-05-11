@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.23)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -15,8 +16,8 @@ add_executable(signalscope MACOSX_BUNDLE
     ${DIR_SRC_FILES}
 )
 
-add_subdirectory(audio_decoder)
-add_subdirectory(spectrum_analyzer)
+add_subdirectory(../audio_decoder ${CMAKE_BINARY_DIR}/audio_decoder)
+add_subdirectory(../spectrum_analyzer ${CMAKE_BINARY_DIR}/spectrum_analyzer)
 
 target_include_directories(signalscope PRIVATE
     .
@@ -41,10 +42,6 @@ target_link_libraries(signalscope PRIVATE
 
 set_target_properties(signalscope PROPERTIES
     MACOSX_BUNDLE TRUE
-    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/Info.plist"
-    MACOSX_BUNDLE_BUNDLE_NAME "SignalScope"
-    MACOSX_BUNDLE_GUI_IDENTIFIER "com.pakut2.signalscope"
-    MACOSX_BUNDLE_BUNDLE_VERSION "1"
-    MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
+    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/../Info.plist"
 )
 

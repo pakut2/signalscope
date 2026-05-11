@@ -13,22 +13,20 @@ void on_microphone_audio_capture(ma_device *device, void *output, const void *in
     callback((float *)input, frame_count);
 }
 
-void decode_speaker_audio(on_device_init device_init_callback, on_samples_processed samples_processed_callback) {
+audio_decoder speaker_audio_decoder_start(on_samples_processed samples_processed_callback) {
     ca_audio_tap *tap = calloc(1, sizeof(*tap));
     assert(tap != NULL);
 
     ca_loopback_device_start(tap, on_speaker_audio_capture, samples_processed_callback);
 
-    device_init_callback((size_t)tap->format.mSampleRate);
+    return (audio_decoder){(size_t)tap->format.mSampleRate, {.speaker = tap}};
+}
 
+void speaker_audio_decoder_stop(ca_audio_tap *tap) {
     ca_loopback_device_stop(tap);
 }
 
-void decode_microphone_audio(on_device_init device_init_callback, on_samples_processed samples_processed_callback) {
-    ma_context context;
-    ma_result ma_result = ma_context_init(NULL, 0, NULL, &context);
-    assert(ma_result == MA_SUCCESS);
-
+audio_decoder microphone_audio_decoder_start(on_samples_processed samples_processed_callback) {
     ma_device_config config = ma_device_config_init(ma_device_type_capture);
     config.capture.format = ma_format_f32;
     config.capture.channels = 1;
@@ -36,13 +34,41 @@ void decode_microphone_audio(on_device_init device_init_callback, on_samples_pro
     config.dataCallback = on_microphone_audio_capture;
     config.pUserData = samples_processed_callback;
 
-    ma_device device;
-    ma_result = ma_device_init(NULL, &config, &device);
+    ma_device *device = calloc(1, sizeof(*device));
+    assert(device != NULL);
+    ma_result ma_result = ma_device_init(NULL, &config, device);
     assert(ma_result == MA_SUCCESS);
 
-    ma_device_start(&device);
+    ma_device_start(device);
 
-    device_init_callback(device.sampleRate);
+    return (audio_decoder){device->sampleRate, {.microphone = device}};
+}
 
-    ma_device_uninit(&device);
+void microphone_audio_decoder_stop(ma_device *device) {
+    ma_device_uninit(device);
+    free(device);
+}
+
+audio_decoder audio_decoder_start(DEVICE_TYPE device_type, on_samples_processed samples_processed_callback) {
+    switch (device_type) {
+        case SPEAKER: {
+            return speaker_audio_decoder_start(samples_processed_callback);
+        }
+        case MICROPHONE: {
+            return microphone_audio_decoder_start(samples_processed_callback);
+        }
+    }
+}
+
+void audio_decoder_stop(DEVICE_TYPE device_type, device device) {
+    switch (device_type) {
+        case SPEAKER: {
+            speaker_audio_decoder_stop(device.speaker);
+
+            break;
+        }
+        case MICROPHONE: {
+            microphone_audio_decoder_stop(device.microphone);
+        }
+    }
 }
