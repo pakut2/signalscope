@@ -31,8 +31,8 @@ class AudioDecoder(ctypes.Structure):
 
 
 def init_audio():
-    spectrum_analyzer = ctypes.CDLL(find_audio_library("libspectrum_analyzer.dylib"))
-    audio_decoder = ctypes.CDLL(find_audio_library("libaudio_decoder.dylib"))
+    spectrum_analyzer = ctypes.CDLL(find_library_path("libspectrum_analyzer.dylib"))
+    audio_decoder = ctypes.CDLL(find_library_path("libaudio_decoder.dylib"))
 
     spectrum_analyzer.spectrum_analyzer_init.restype = None
     spectrum_analyzer.spectrum_analyzer_init.argtypes = []
@@ -57,7 +57,7 @@ def init_audio():
     return spectrum_analyzer, audio_decoder, OnSamplesProcessed
 
 
-def find_audio_library(library_name):
+def find_library_path(library_name):
     bundle = os.path.dirname(os.path.dirname(os.path.abspath(sys.executable)))
 
     library_path = os.path.join(bundle, "Frameworks", library_name)
