@@ -1,8 +1,10 @@
+cmake_minimum_required(VERSION 3.23)
+
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_NAME}")
 endif()
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+enable_language(OBJC)
 
 add_library(audio_decoder SHARED
     audio_decoder.c

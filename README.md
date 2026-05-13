@@ -1,63 +1,46 @@
 # SignalScope
 
-## Terminal
+> [!CAUTION]
+> Only supports MacOS (for now) (not really).
 
-### Initialize
+Visualize system-wide audio output.
 
-```shell
-cd build
+## Requirements
 
-cmake ../terminal -DCMAKE_BUILD_TYPE=Debug # Debug build
-cmake .. # Release build
-```
+- Clang
+- Make
+- CMake
 
-### Build
+### Desktop
 
-```shell
-cd build
+- Python
+- Tkinter
 
-make
-```
+### Terminal
 
-### Run
+- ncurses
 
-```shell
-cd build
+## Quickstart (Desktop)
 
-./signalscope.app/Contents/MacOS/signalscope
-```
+Run `./build_desktop.sh`. Open built application under `./desktop/dist`.
 
-## Desktop
+## Quickstart (Terminal)
 
-### Build Libraries
+Run `./build_terminal.sh`. Application will start immediatelly in the current terminal session.
 
-```shell
-cd build
+## External Usage
 
-cmake ..
-make
-```
+Core logic is separated into dynamic libraries:
 
-### Initialize
+- **audio_decoder**: Speaker / microphone realtime audio samples aquisition. MacOS exclusive.
+- **spectrum_analyzer**: Audio samples frequency domain transformation and normalization.
 
-```shell
-cd desktop
+Libraries can be built and used externally, as is done with Desktop and Terminal applications.
 
-python -m venv .venv
-source .venv/bin/activate
-pip install setuptools py2app
-```
-
-### Build
+### Building Standalone Libraries
 
 ```shell
-cd desktop
-
-source .venv/bin/activate
-python setup.py py2app
+# cmake -S <library-name> -B <library-name>/build && cmake --build <library-name>/build
+cmake -S spectrum_analyzer -B spectrum_analyzer/build && cmake --build spectrum_analyzer/build
 ```
-
-### Run
-
-Open application in `dist` directory.
 

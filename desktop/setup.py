@@ -4,8 +4,8 @@ APP = ["main.py"]
 OPTIONS = {
     "argv_emulation": False,
     "frameworks": [
-        "../build/spectrum_analyzer/libspectrum_analyzer.dylib",
-        "../build/audio_decoder/libaudio_decoder.dylib",
+        "../audio_decoder/build/libaudio_decoder.dylib",
+        "../spectrum_analyzer/build/libspectrum_analyzer.dylib",
     ],
     "plist": "../Info.plist",
 }
