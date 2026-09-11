@@ -42,7 +42,7 @@ def init_audio():
         ctypes.c_size_t,
     ]
     spectrum_analyzer.spectrum_create.restype = Spectrum
-    spectrum_analyzer.spectrum_create.argtypes = [ctypes.c_size_t]
+    spectrum_analyzer.spectrum_create.argtypes = [ctypes.c_size_t, ctypes.c_size_t]
     spectrum_analyzer.spectrum_destroy.restype = None
     spectrum_analyzer.spectrum_destroy.argtypes = [ctypes.POINTER(Spectrum)]
 

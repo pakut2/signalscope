@@ -8,6 +8,7 @@ BAR_COLOR = "#00ff88"
 BG_COLOR = "#171717"
 
 BAR_SPACING = 2
+BAR_COUNT = 120
 SMOOTHNESS = 8.0
 
 FRAME_MS = 16
@@ -49,7 +50,7 @@ class App:
         frame_elapsed_seconds = current_frame_timestamp - self.last_frame_timestamp
         self.last_frame_timestamp = current_frame_timestamp
 
-        spectrum = self.spectrum_analyzer.spectrum_create(self.sample_rate)
+        spectrum = self.spectrum_analyzer.spectrum_create(self.sample_rate, BAR_COUNT)
 
         if spectrum.frequency_bin_count > len(self.interpolated_frequencies):
             self.interpolated_frequencies.extend(

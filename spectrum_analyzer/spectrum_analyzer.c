@@ -7,9 +7,8 @@
 #include <stdlib.h>
 
 #define MIN_FREQUENCY 35.0f
-#define MAX_FREQUENCY 20000.0f
+#define MAX_FREQUENCY 16000.0f // TODO adjustable max frequency
 #define MIN_FREQUENCY_LOUDNESS -FLT_MAX
-#define SEMITONE_FREQUENCY_COEFFICIENT 1.06f
 
 ring_bufferf samples;
 float complex frequencies[SAMPLE_COUNT];
@@ -96,15 +95,19 @@ float get_frequency_bin_index(float frequency, size_t frequency_count, size_t sa
     return frequency * (float)(frequency_count * 2) / (float)sample_rate;
 }
 
-float find_next_frequency_bin(float previous_bin) {
-    return ceilf(previous_bin * SEMITONE_FREQUENCY_COEFFICIENT);
+float find_frequency_bin_coefficient(size_t bin_count) {
+    return expf(logf(MAX_FREQUENCY / MIN_FREQUENCY) / (float)bin_count);
+}
+
+float find_next_frequency_bin(float previous_bin, float bin_coefficient) {
+    return ceilf(previous_bin * bin_coefficient);
 }
 
 float clamp01(float value) {
     return fminf(fmaxf(value, 0.0f), 1.0f);
 }
 
-spectrum normalize_frequencies(float complex frequencies[], size_t frequency_count, size_t sample_rate) {
+spectrum normalize_frequencies(float complex frequencies[], size_t frequency_count, size_t sample_rate, size_t target_frequency_bin_count) {
     float max_loudness = MIN_FREQUENCY_LOUDNESS;
     for (size_t i = 1; i < frequency_count; i++) {
         float loudness = find_frequency_loudness(frequencies[i], frequency_count, i, sample_rate);
@@ -120,18 +123,19 @@ spectrum normalize_frequencies(float complex frequencies[], size_t frequency_cou
 
     float min_frequency_bin = get_frequency_bin_index(MIN_FREQUENCY, frequency_count, sample_rate);
     float max_frequency_bin = get_frequency_bin_index(MAX_FREQUENCY, frequency_count, sample_rate);
+    float frequency_bin_coefficient = find_frequency_bin_coefficient(target_frequency_bin_count);
 
     size_t frequency_bin_count = 0;
-    for (float f = min_frequency_bin; (size_t)f < frequency_count && f < max_frequency_bin; f = find_next_frequency_bin(f)) {
+    for (float f = min_frequency_bin; (size_t)f < frequency_count && f < max_frequency_bin; f = find_next_frequency_bin(f, frequency_bin_coefficient)) {
         frequency_bin_count++;
     }
 
-    float *normalized_frequencies = malloc(frequency_bin_count * sizeof normalized_frequencies[0]);
+    float *normalized_frequencies = malloc(target_frequency_bin_count * sizeof normalized_frequencies[0]);
     assert(normalized_frequencies != NULL);
 
     size_t current_frequency_bin = 0;
-    for (float f = min_frequency_bin; (size_t)f < frequency_count && f < max_frequency_bin; f = find_next_frequency_bin(f)) {
-        size_t next_frequency_bin = (size_t)find_next_frequency_bin(f);
+    for (float f = min_frequency_bin; (size_t)f < frequency_count && f < max_frequency_bin; f = find_next_frequency_bin(f, frequency_bin_coefficient)) {
+        size_t next_frequency_bin = (size_t)find_next_frequency_bin(f, frequency_bin_coefficient);
 
         float max_semitone_loudness = MIN_FREQUENCY_LOUDNESS;
         for (size_t i = (size_t)f; i < frequency_count && i < next_frequency_bin; i++) {
@@ -170,7 +174,7 @@ void spectrum_samples_append(float *audio_samples, size_t audio_sample_count) {
     ring_bufferf_append(&samples, audio_samples, audio_sample_count);
 }
 
-spectrum spectrum_create(size_t sample_rate) {
+spectrum spectrum_create(size_t sample_rate, size_t target_spectrum_size) {
     float samples_frame[SAMPLE_COUNT];
     ring_bufferf_read(&samples, samples_frame);
 
@@ -179,7 +183,7 @@ spectrum spectrum_create(size_t sample_rate) {
 
     fft(smoothed_samples, frequencies, SAMPLE_COUNT, 1);
 
-    return normalize_frequencies(frequencies, SAMPLE_COUNT / 2, sample_rate);
+    return normalize_frequencies(frequencies, SAMPLE_COUNT / 2, sample_rate, target_spectrum_size);
 }
 
 void spectrum_destroy(spectrum *spectrum) {

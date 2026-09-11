@@ -6,9 +6,10 @@
 
 #define ENABLE_CURSES 1
 
-const float height = 50.0f;
+const float height = 25.0f;
 const size_t spacing = 2;
 const float smoothness = 8.0f;
+const size_t target_frequency_bin_count = 120;
 
 float interpolated_frequencies[SAMPLE_COUNT];
 
@@ -17,7 +18,7 @@ void on_audio_capture(float *samples, size_t samples_count) {
 }
 
 void render_frame(size_t sample_rate, float frame_elapsed_sec) {
-    spectrum spectrum = spectrum_create(sample_rate);
+    spectrum spectrum = spectrum_create(sample_rate, target_frequency_bin_count);
 
     renderer_clear();
 
